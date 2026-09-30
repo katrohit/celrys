@@ -215,4 +215,11 @@ resource "azurerm_linux_virtual_machine" "millionsend" {
   }))
   tags       = local.tags
   depends_on = [azurerm_role_assignment.vm_secrets]
+
+  # cloud-init is first-boot configuration.  Changing it later must not
+  # replace a healthy VM; runtime configuration is converged by the deploy
+  # workflow from the versioned files in this repository.
+  lifecycle {
+    ignore_changes = [custom_data]
+  }
 }

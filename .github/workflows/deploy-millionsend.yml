@@ -46,13 +46,22 @@ jobs:
           CADDYFILE_B64="$(base64 -w0 infra/Caddyfile)"
           KEY_VAULT_NAME="$(az keyvault list --resource-group "$RESOURCE_GROUP" --query '[0].name' -o tsv)"
           SECRETS_SCRIPT_B64="$(sed "s/__KEY_VAULT_NAME__/$KEY_VAULT_NAME/g" infra/celrys-sync-secrets.sh | base64 -w0)"
-          az vm run-command invoke \
+          RESULT="$(az vm run-command invoke \
             --resource-group "$RESOURCE_GROUP" \
             --name "$VM_NAME" \
             --command-id RunShellScript \
             --scripts "
               # Azure Run Command invokes inline scripts with /bin/sh.
               set -eu
+              # A replacement VM can still be completing cloud-init. Wait for
+              # Docker rather than treating a premature Run Command response as a deploy.
+              attempt=0
+              until command -v docker >/dev/null 2>&1; do
+                attempt=\$((attempt + 1))
+                [ \"\$attempt\" -le 60 ] || { echo 'Docker was not installed by cloud-init in time' >&2; exit 1; }
+                sleep 5
+              done
+              mkdir -p /opt/millionsend
               printf '%s' '$CADDYFILE_B64' | base64 -d > /opt/millionsend/Caddyfile
               printf '%s' '$SECRETS_SCRIPT_B64' | base64 -d > /usr/local/bin/celrys-sync-secrets
               chmod 700 /usr/local/bin/celrys-sync-secrets
@@ -62,6 +71,12 @@ jobs:
               docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps
               docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps --status running --services | grep -x caddy
               docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps --status running --services | grep -x millionsend
+              echo CELRYS_DEPLOY_SUCCESS
             " \
-            --output json > run-command-result.json
-          jq -r ".value[].message" run-command-result.json
+            --output json)"
+          jq -r '.value[].message' <<<"$RESULT"
+          # Azure Run Command may return a successful ARM operation even when
+          # the shell script failed. The marker is printed only after all checks pass.
+          jq -r '.value[].message' <<<"$RESULT" | grep -qx 'CELRYS_DEPLOY_SUCCESS'
+      - name: Verify public web endpoint
+        run: curl --fail --silent --show-error --max-time 20 --retry 12 --retry-delay 5 https://mesend.celrys.com/ >/dev/null
