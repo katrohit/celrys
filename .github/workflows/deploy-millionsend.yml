@@ -1,0 +1,55 @@
+name: Deploy MillionSend
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_update:
+        description: Pull the current MillionSend image before restarting
+        required: true
+        default: true
+        type: boolean
+      reason:
+        description: Deployment or maintenance reason
+        required: true
+        default: Routine deployment
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  RESOURCE_GROUP: rg-celrys-prod
+  VM_NAME: vm-celrys-prod-millionsend
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  deploy:
+    name: Refresh secrets and deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Run deployment on VM
+        run: |
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$VM_NAME" \
+            --command-id RunShellScript \
+            --scripts '
+              set -euo pipefail
+              if [ "${{ inputs.image_update }}" = "true" ]; then
+                docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend pull
+              fi
+              /usr/local/bin/celrys-sync-secrets
+              docker image prune -f
+            ' \
+            --output json > run-command-result.json
+          jq -r ".value[].message" run-command-result.json
+
