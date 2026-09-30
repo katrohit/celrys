@@ -153,9 +153,9 @@ resource "random_password" "postgres" {
   length  = 40
   special = true
 }
-resource "random_password" "master_key" {
-  length  = 43
-  special = false
+# MillionSend requires canonical base64 for exactly 32 random bytes.
+resource "random_id" "master_key" {
+  byte_length = 32
 }
 resource "random_password" "auth_secret" {
   length  = 43
@@ -170,7 +170,7 @@ resource "azurerm_key_vault_secret" "postgres_password" {
 }
 resource "azurerm_key_vault_secret" "master_key" {
   name         = "master-encryption-key"
-  value        = random_password.master_key.result
+  value        = random_id.master_key.b64_std
   key_vault_id = azurerm_key_vault.platform.id
   depends_on   = [azurerm_role_assignment.operator_secrets]
 }
