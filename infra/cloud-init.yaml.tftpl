@@ -36,10 +36,16 @@ write_files:
     permissions: "0644"
     content: |
       ${web_hostname} {
-        handle /ses/events { reverse_proxy millionsend:3001 }
-        handle { reverse_proxy millionsend:3000 }
+        handle /ses/events {
+          reverse_proxy millionsend:3001
+        }
+        handle {
+          reverse_proxy millionsend:3000
+        }
       }
-      ${api_hostname} { reverse_proxy millionsend:3001 }
+      ${api_hostname} {
+        reverse_proxy millionsend:3001
+      }
   - path: /usr/local/bin/celrys-sync-secrets
     permissions: "0700"
     content: |

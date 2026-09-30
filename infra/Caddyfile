@@ -1,0 +1,13 @@
+mesend.celrys.com {
+  handle /ses/events {
+    reverse_proxy millionsend:3001
+  }
+
+  handle {
+    reverse_proxy millionsend:3000
+  }
+}
+
+api.mesend.celrys.com {
+  reverse_proxy millionsend:3001
+}
