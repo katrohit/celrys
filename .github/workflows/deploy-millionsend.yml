@@ -50,6 +50,9 @@ jobs:
               fi
               /usr/local/bin/celrys-sync-secrets
               docker image prune -f
+              docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps
+              ss -lnt
+              docker logs millionsend-caddy-1 --tail 80
             ' \
             --output json > run-command-result.json
           jq -r ".value[].message" run-command-result.json
