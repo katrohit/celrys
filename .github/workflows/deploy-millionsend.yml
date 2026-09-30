@@ -31,6 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - uses: actions/checkout@v4
+      - name: Validate Caddy configuration
+        run: docker run --rm -v "$PWD/infra/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - uses: azure/login@v2
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -38,21 +41,20 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       - name: Run deployment on VM
         run: |
+          CADDYFILE_B64="$(base64 -w0 infra/Caddyfile)"
           az vm run-command invoke \
             --resource-group "$RESOURCE_GROUP" \
             --name "$VM_NAME" \
             --command-id RunShellScript \
-            --scripts '
+            --scripts "
               # Azure Run Command invokes inline scripts with /bin/sh.
               set -eu
-              if [ "${{ inputs.image_update }}" = "true" ]; then
-                docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend pull
-              fi
+              printf '%s' '$CADDYFILE_B64' | base64 -d > /opt/millionsend/Caddyfile
+              docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend pull
               /usr/local/bin/celrys-sync-secrets
               docker image prune -f
               docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps
-              ss -lnt
-              docker logs millionsend-caddy-1 --tail 80
-            ' \
+              docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps --status running --services | grep -x caddy
+            " \
             --output json > run-command-result.json
           jq -r ".value[].message" run-command-result.json
