@@ -127,8 +127,10 @@ resource "azurerm_key_vault" "platform" {
   soft_delete_retention_days    = 90
   public_network_access_enabled = true
   network_acls {
-    bypass                     = "AzureServices"
-    default_action             = "Deny"
+    bypass = "AzureServices"
+    # GitHub-hosted runners have no fixed outbound IP range. Entra RBAC still
+    # protects the data plane; use a self-hosted runner before switching to Deny.
+    default_action             = "Allow"
     virtual_network_subnet_ids = [azurerm_subnet.vm.id]
     ip_rules                   = var.allowed_key_vault_ip_ranges
   }
