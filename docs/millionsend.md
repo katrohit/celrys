@@ -31,7 +31,7 @@ az keyvault secret set --vault-name "$VAULT" --name sns-topic-arns --value "<top
 az keyvault secret set --vault-name "$VAULT" --name sqs-queue-url --value "<queue-url>"
 ```
 
-5. Point `millionsend.xyz.celrys.com` and `api.millionsend.xyz.celrys.com` A records at `terraform output -raw public_ip_address`. SSH in, then run:
+5. Point `mesend.celrys.com` and `api.mesend.celrys.com` A records at `terraform output -raw public_ip_address`. SSH in, then run:
 
 ```bash
 sudo /usr/local/bin/celrys-sync-secrets

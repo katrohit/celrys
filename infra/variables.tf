@@ -12,11 +12,11 @@ variable "name_prefix" {
 }
 variable "web_hostname" {
   type    = string
-  default = "millionsend.xyz.celrys.com"
+  default = "mesend.celrys.com"
 }
 variable "api_hostname" {
   type    = string
-  default = "api.millionsend.xyz.celrys.com"
+  default = "api.mesend.celrys.com"
 }
 variable "vm_size" {
   type    = string
