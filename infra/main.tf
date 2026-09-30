@@ -78,7 +78,7 @@ resource "azurerm_public_ip" "vm" {
 resource "azurerm_dns_a_record" "mesend" {
   name                = "mesend"
   zone_name           = data.azurerm_dns_zone.celrys.name
-  resource_group_name = data.azurerm_dns_zone.celrys.resource_group
+  resource_group_name = var.dns_resource_group_name
   ttl                 = 300
   records             = [azurerm_public_ip.vm.ip_address]
 }
@@ -86,7 +86,7 @@ resource "azurerm_dns_a_record" "mesend" {
 resource "azurerm_dns_a_record" "api_mesend" {
   name                = "api.mesend"
   zone_name           = data.azurerm_dns_zone.celrys.name
-  resource_group_name = data.azurerm_dns_zone.celrys.resource_group
+  resource_group_name = var.dns_resource_group_name
   ttl                 = 300
   records             = [azurerm_public_ip.vm.ip_address]
 }
@@ -122,7 +122,7 @@ resource "azurerm_key_vault" "platform" {
   resource_group_name           = azurerm_resource_group.platform.name
   tenant_id                     = data.azurerm_client_config.current.tenant_id
   sku_name                      = "standard"
-  enable_rbac_authorization     = true
+  rbac_authorization_enabled    = true
   purge_protection_enabled      = true
   soft_delete_retention_days    = 90
   public_network_access_enabled = true
