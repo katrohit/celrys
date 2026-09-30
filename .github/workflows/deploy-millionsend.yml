@@ -34,6 +34,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate Caddy configuration
         run: docker run --rm -v "$PWD/infra/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Validate runtime configuration script
+        run: bash -n infra/celrys-sync-secrets.sh
       - uses: azure/login@v2
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -42,6 +44,8 @@ jobs:
       - name: Run deployment on VM
         run: |
           CADDYFILE_B64="$(base64 -w0 infra/Caddyfile)"
+          KEY_VAULT_NAME="$(az keyvault list --resource-group "$RESOURCE_GROUP" --query '[0].name' -o tsv)"
+          SECRETS_SCRIPT_B64="$(sed "s/__KEY_VAULT_NAME__/$KEY_VAULT_NAME/g" infra/celrys-sync-secrets.sh | base64 -w0)"
           az vm run-command invoke \
             --resource-group "$RESOURCE_GROUP" \
             --name "$VM_NAME" \
@@ -50,11 +54,14 @@ jobs:
               # Azure Run Command invokes inline scripts with /bin/sh.
               set -eu
               printf '%s' '$CADDYFILE_B64' | base64 -d > /opt/millionsend/Caddyfile
+              printf '%s' '$SECRETS_SCRIPT_B64' | base64 -d > /usr/local/bin/celrys-sync-secrets
+              chmod 700 /usr/local/bin/celrys-sync-secrets
               docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend pull
               /usr/local/bin/celrys-sync-secrets
               docker image prune -f
               docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps
               docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps --status running --services | grep -x caddy
+              docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps --status running --services | grep -x millionsend
             " \
             --output json > run-command-result.json
           jq -r ".value[].message" run-command-result.json

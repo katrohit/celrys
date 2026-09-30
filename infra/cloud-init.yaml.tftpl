@@ -57,7 +57,7 @@ write_files:
       umask 077
       cat >/opt/millionsend/.env <<EOF
       POSTGRES_PASSWORD=$(secret postgres-password)
-      DATABASE_URL=postgres://millionsend:$(secret postgres-password)@postgres:5432/millionsend
+      DATABASE_URL=postgres://millionsend:$(secret postgres-password | jq -sRr @uri)@postgres:5432/millionsend
       MASTER_ENCRYPTION_KEY=$(secret master-encryption-key)
       BETTER_AUTH_SECRET=$(secret better-auth-secret)
       AWS_REGION=us-east-1
