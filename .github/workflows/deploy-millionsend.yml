@@ -43,7 +43,8 @@ jobs:
             --name "$VM_NAME" \
             --command-id RunShellScript \
             --scripts '
-              set -euo pipefail
+              # Azure Run Command invokes inline scripts with /bin/sh.
+              set -eu
               if [ "${{ inputs.image_update }}" = "true" ]; then
                 docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend pull
               fi
@@ -52,4 +53,3 @@ jobs:
             ' \
             --output json > run-command-result.json
           jq -r ".value[].message" run-command-result.json
-
