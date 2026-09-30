@@ -1,0 +1,70 @@
+#cloud-config
+package_update: true
+packages: [curl, jq]
+write_files:
+  - path: /opt/millionsend/compose.yaml
+    permissions: "0644"
+    content: |
+      services:
+        postgres:
+          image: postgres:17-alpine
+          restart: unless-stopped
+          environment:
+            POSTGRES_USER: millionsend
+            POSTGRES_DB: millionsend
+            POSTGRES_PASSWORD: $${POSTGRES_PASSWORD}
+          volumes: [postgres:/var/lib/postgresql/data]
+          healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U millionsend -d millionsend"]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+        millionsend:
+          image: ghcr.io/millionsend/millionsend:latest
+          restart: unless-stopped
+          environment: { PROCESS: all }
+          env_file: .env
+          ports: ["127.0.0.1:3000:3000", "127.0.0.1:3001:3001"]
+          depends_on: { postgres: { condition: service_healthy } }
+        caddy:
+          image: caddy:2-alpine
+          restart: unless-stopped
+          ports: ["80:80", "443:443"]
+          volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", "caddy_data:/data"]
+      volumes: { postgres: {}, caddy_data: {} }
+  - path: /opt/millionsend/Caddyfile
+    permissions: "0644"
+    content: |
+      ${web_hostname} {
+        handle /ses/events { reverse_proxy millionsend:3001 }
+        handle { reverse_proxy millionsend:3000 }
+      }
+      ${api_hostname} { reverse_proxy millionsend:3001 }
+  - path: /usr/local/bin/celrys-sync-secrets
+    permissions: "0700"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      vault="${key_vault_name}"
+      token=$(curl -fsS -H Metadata:true 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2019-08-01&resource=https://vault.azure.net' | jq -r .access_token)
+      secret() { curl -fsS -H "Authorization: Bearer $token" "https://$vault.vault.azure.net/secrets/$1?api-version=7.4" | jq -r .value; }
+      umask 077
+      cat >/opt/millionsend/.env <<EOF
+      POSTGRES_PASSWORD=$(secret postgres-password)
+      DATABASE_URL=postgres://millionsend:$(secret postgres-password)@postgres:5432/millionsend
+      MASTER_ENCRYPTION_KEY=$(secret master-encryption-key)
+      BETTER_AUTH_SECRET=$(secret better-auth-secret)
+      AWS_REGION=us-east-1
+      AWS_ACCESS_KEY_ID=$(secret aws-access-key-id)
+      AWS_SECRET_ACCESS_KEY=$(secret aws-secret-access-key)
+      SNS_TOPIC_ARNS=$(secret sns-topic-arns)
+      SQS_QUEUE_URL=$(secret sqs-queue-url)
+      SES_CONFIGURATION_SET=millionsend
+      APP_BASE_URL=https://${web_hostname}
+      PUBLIC_API_URL=https://${api_hostname}
+      ALLOW_SIGNUP=false
+      EOF
+      docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend up -d
+runcmd:
+  - [bash, -lc, "curl -fsSL https://get.docker.com | sh"]
+  - [bash, -lc, "mkdir -p /opt/millionsend && systemctl enable --now docker"]

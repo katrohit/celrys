@@ -1,0 +1,9 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+backend.hcl
+.env
+.env.*
+!.env.example
+dist/
