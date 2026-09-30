@@ -35,3 +35,11 @@ variable "allowed_key_vault_ip_ranges" {
   default     = []
   description = "Operator/CI IPv4 CIDRs allowed to write Key Vault secrets."
 }
+variable "dns_zone_name" {
+  type    = string
+  default = "celrys.com"
+}
+variable "dns_resource_group_name" {
+  type    = string
+  default = "ao30"
+}
