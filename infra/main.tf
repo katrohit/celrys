@@ -1,4 +1,8 @@
 data "azurerm_client_config" "current" {}
+data "azurerm_dns_zone" "celrys" {
+  name                = var.dns_zone_name
+  resource_group_name = var.dns_resource_group_name
+}
 
 locals {
   name = "${var.name_prefix}-${var.environment}"
@@ -69,6 +73,22 @@ resource "azurerm_public_ip" "vm" {
   allocation_method   = "Static"
   sku                 = "Standard"
   tags                = local.tags
+}
+
+resource "azurerm_dns_a_record" "mesend" {
+  name                = "mesend"
+  zone_name           = data.azurerm_dns_zone.celrys.name
+  resource_group_name = data.azurerm_dns_zone.celrys.resource_group
+  ttl                 = 300
+  records             = [azurerm_public_ip.vm.ip_address]
+}
+
+resource "azurerm_dns_a_record" "api_mesend" {
+  name                = "api.mesend"
+  zone_name           = data.azurerm_dns_zone.celrys.name
+  resource_group_name = data.azurerm_dns_zone.celrys.resource_group
+  ttl                 = 300
+  records             = [azurerm_public_ip.vm.ip_address]
 }
 
 resource "azurerm_network_interface" "vm" {
