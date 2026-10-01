@@ -41,7 +41,7 @@ Link tracking only works if the tracking host is served by Caddy from this repo.
    ```
 
 3. Open a PR and merge it (CI validates the Caddyfile), then run the "Deploy MillionSend" workflow. Leave `image_update` off unless you want a new MillionSend image.
-4. **Reload Caddy.** The deploy writes the new Caddyfile to the VM but does not reload Caddy, so the host is not served until you do: `sudo docker exec millionsend-caddy-1 caddy reload --config /etc/caddy/Caddyfile`.
+4. The deploy reloads Caddy automatically after writing the Caddyfile, and fails if Caddy rejects the config. If you ever need to do it by hand: `sudo docker exec millionsend-caddy-1 caddy reload --config /etc/caddy/Caddyfile`.
 5. Verify: `curl -sSI https://<host>/t/c/x` must show a valid certificate and an app response, and a real tracked link must return `302` to its destination, not `404`. Check the Caddy logs for `certificate obtained successfully` for the host.
 
 Do not edit `/opt/millionsend/Caddyfile` on the VM with `sed -i` or an editor that replaces the file. The single-file Docker bind mount keeps reading the old file, so the change appears on disk but Caddy ignores it until the container is restarted (`sudo docker restart millionsend-caddy-1`). A hand edit on the VM is also overwritten by the next deploy unless it is in the repo.
