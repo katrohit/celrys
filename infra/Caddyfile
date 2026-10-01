@@ -15,7 +15,7 @@ api.mesend.celrys.com {
 # Link-tracking host used in already-sent emails (card and unsubscribe links).
 # Only tracked-link paths reach the web app; everything else is a plain 404 so the host doesn't reveal MillionSend.
 lm.gotixi.in {
-  @tracking path /t/*
+  @tracking path_regexp ^/t/c/[^/]+$
   handle @tracking {
     reverse_proxy millionsend:3000
   }
