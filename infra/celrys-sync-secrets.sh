@@ -22,7 +22,8 @@ SQS_QUEUE_URL=$(secret sqs-queue-url)
 SES_CONFIGURATION_SET=millionsend
 APP_BASE_URL=https://mesend.celrys.com
 PUBLIC_API_URL=https://api.mesend.celrys.com
-ALLOW_SIGNUP=false
+ALLOW_SIGNUP=__ALLOW_SIGNUP__
+AUTH_EMAIL_FROM=hello@gotixi.in
 EOF
 
 docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend up -d

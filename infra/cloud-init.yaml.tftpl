@@ -69,6 +69,7 @@ write_files:
       APP_BASE_URL=https://${web_hostname}
       PUBLIC_API_URL=https://${api_hostname}
       ALLOW_SIGNUP=false
+      AUTH_EMAIL_FROM=hello@gotixi.in
       EOF
       docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend up -d
 runcmd:
