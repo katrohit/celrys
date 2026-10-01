@@ -26,3 +26,22 @@ SES must not wrap links a second time. Virtual Deliverability Manager (VDM) enga
 - SES is not managed in this repo. If it is managed in Terraform elsewhere, set `engagement_metrics = "DISABLED"` in `aws_sesv2_account_vdm_attributes`, or the next apply may turn it back on.
 - The setting is per region. Repeat it for any other region used for sending.
 - It only affects emails sent after the change. Links in earlier emails still go through `awstrack.me`, then on to `lm.gotixi.in`.
+
+## Adding a new sending/tracking domain in MillionSend
+
+Link tracking only works if the tracking host is served by Caddy from this repo. When you add a domain in MillionSend:
+
+1. Point the tracking host's A record (e.g. `lm.example.com`) at `terraform output -raw public_ip_address`. Ports 80 and 443 must be open so Caddy can get its Let's Encrypt certificate.
+2. Add a site block that proxies to the web app (port 3000, not the API on 3001), in **both** `infra/Caddyfile` and the Caddyfile in `infra/cloud-init.yaml.tftpl`, so a rebuilt VM matches:
+
+   ```
+   lm.example.com {
+     reverse_proxy millionsend:3000
+   }
+   ```
+
+3. Open a PR and merge it (CI validates the Caddyfile), then run the "Deploy MillionSend" workflow. Leave `image_update` off unless you want a new MillionSend image.
+4. **Reload Caddy.** The deploy writes the new Caddyfile to the VM but does not reload Caddy, so the host is not served until you do: `sudo docker exec millionsend-caddy-1 caddy reload --config /etc/caddy/Caddyfile`.
+5. Verify: `curl -sSI https://<host>/t/c/x` must show a valid certificate and an app response, and a real tracked link must return `302` to its destination, not `404`. Check the Caddy logs for `certificate obtained successfully` for the host.
+
+Do not edit `/opt/millionsend/Caddyfile` on the VM with `sed -i` or an editor that replaces the file. The single-file Docker bind mount keeps reading the old file, so the change appears on disk but Caddy ignores it until the container is restarted (`sudo docker restart millionsend-caddy-1`). A hand edit on the VM is also overwritten by the next deploy unless it is in the repo.
