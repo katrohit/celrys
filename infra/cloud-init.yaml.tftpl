@@ -68,7 +68,7 @@ write_files:
       SES_CONFIGURATION_SET=millionsend
       APP_BASE_URL=https://${web_hostname}
       PUBLIC_API_URL=https://${api_hostname}
-      ALLOW_SIGNUP=false
+      ALLOW_SIGNUP=true
       AUTH_EMAIL_FROM=hello@gotixi.in
       EOF
       docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend up -d
