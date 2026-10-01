@@ -37,7 +37,7 @@ az keyvault secret set --vault-name "$VAULT" --name sqs-queue-url --value "<queu
 sudo /usr/local/bin/celrys-sync-secrets
 ```
 
-Caddy gets TLS certificates after DNS resolves. Register the first MillionSend user, then leave signups closed. To add a member later, run the "Deploy MillionSend" workflow with `allow_signup` on, then run it again with it off.
+Caddy gets TLS certificates after DNS resolves. The tracking host `lm.gotixi.in` (A record to the same IP, ports 80/443 open) is served from `infra/Caddyfile`, so Caddy issues its Let's Encrypt certificate on the next deploy. Register the first MillionSend user, then leave signups closed. To add a member later, run the "Deploy MillionSend" workflow with `allow_signup` on, then run it again with it off.
 
 ## Operations
 
