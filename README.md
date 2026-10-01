@@ -17,7 +17,7 @@ Read [the deployment guide](docs/millionsend.md). It walks through state bootstr
 
 ## Link tracking and SES engagement tracking
 
-Email links are tracked by MillionSend itself through `lm.gotixi.in`. Caddy proxies that host to the web app (`millionsend:3000`, which serves `/t/c/<token>`), not the API on port 3001, which returns 404 for tracked links. Only `/t/*` is proxied; every other path on that host returns an empty 404 so it doesn't reveal MillionSend.
+Email links are tracked by MillionSend itself through `lm.gotixi.in`. Caddy proxies that host to the web app (`millionsend:3000`, which serves `/t/c/<token>`), not the API on port 3001, which returns 404 for tracked links. Only `/t/c/<token>` is proxied; every other path on that host returns an empty 404 so it doesn't reveal MillionSend.
 
 SES must not wrap links a second time. Virtual Deliverability Manager (VDM) engagement metrics rewrite every link to `*.r.<region>.awstrack.me` and add an open pixel, whatever the config set's event destinations say. This is turned off for the SES account in `us-east-1` (`VdmAttributes.DashboardAttributes.EngagementMetrics = DISABLED`), so new domains and config sets are covered. VDM itself and Guardian's optimized shared delivery stay on.
 
