@@ -74,6 +74,14 @@ jobs:
               chmod 700 /usr/local/bin/celrys-sync-secrets
               docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend pull
               /usr/local/bin/celrys-sync-secrets
+              # up -d does not reload Caddy when only the mounted Caddyfile changed.
+              # Reload it so new or changed site blocks are served; a rejected config fails the deploy.
+              attempt=0
+              until docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile; do
+                attempt=\$((attempt + 1))
+                [ \"\$attempt\" -le 5 ] || { echo 'Caddy reload failed' >&2; exit 1; }
+                sleep 3
+              done
               docker image prune -f
               docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps
               docker compose -f /opt/millionsend/compose.yaml --project-directory /opt/millionsend ps --status running --services | grep -x caddy
