@@ -8,6 +8,11 @@ on:
         required: true
         default: true
         type: boolean
+      allow_signup:
+        description: Allow open signups (leave off unless adding a new member)
+        required: true
+        default: false
+        type: boolean
       reason:
         description: Deployment or maintenance reason
         required: true
@@ -42,10 +47,12 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       - name: Run deployment on VM
+        env:
+          ALLOW_SIGNUP: ${{ inputs.allow_signup }}
         run: |
           CADDYFILE_B64="$(base64 -w0 infra/Caddyfile)"
           KEY_VAULT_NAME="$(az keyvault list --resource-group "$RESOURCE_GROUP" --query '[0].name' -o tsv)"
-          SECRETS_SCRIPT_B64="$(sed "s/__KEY_VAULT_NAME__/$KEY_VAULT_NAME/g" infra/celrys-sync-secrets.sh | base64 -w0)"
+          SECRETS_SCRIPT_B64="$(sed -e "s/__KEY_VAULT_NAME__/$KEY_VAULT_NAME/g" -e "s/__ALLOW_SIGNUP__/$ALLOW_SIGNUP/g" infra/celrys-sync-secrets.sh | base64 -w0)"
           RESULT="$(az vm run-command invoke \
             --resource-group "$RESOURCE_GROUP" \
             --name "$VM_NAME" \
