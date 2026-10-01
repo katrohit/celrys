@@ -14,5 +14,5 @@ api.mesend.celrys.com {
 
 # Link-tracking host used in already-sent emails (card and unsubscribe links).
 lm.gotixi.in {
-  reverse_proxy millionsend:3001
+  reverse_proxy millionsend:3000
 }

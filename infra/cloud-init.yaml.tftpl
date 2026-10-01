@@ -48,7 +48,7 @@ write_files:
       }
       # Link-tracking host used in already-sent emails (card and unsubscribe links).
       lm.gotixi.in {
-        reverse_proxy millionsend:3001
+        reverse_proxy millionsend:3000
       }
   - path: /usr/local/bin/celrys-sync-secrets
     permissions: "0700"
