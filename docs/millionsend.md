@@ -37,7 +37,7 @@ az keyvault secret set --vault-name "$VAULT" --name sqs-queue-url --value "<queu
 sudo /usr/local/bin/celrys-sync-secrets
 ```
 
-Caddy gets TLS certificates after DNS resolves. Register the first MillionSend user, then leave `ALLOW_SIGNUP=false`.
+Caddy gets TLS certificates after DNS resolves. Register the first MillionSend user, then leave signups closed. To add a member later, run the "Deploy MillionSend" workflow with `allow_signup` on, then run it again with it off.
 
 ## Operations
 
