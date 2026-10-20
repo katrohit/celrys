@@ -47,8 +47,15 @@ write_files:
         reverse_proxy millionsend:3001
       }
       # Link-tracking host used in already-sent emails (card and unsubscribe links).
+      # Only click (/t/c/<token>) and open-pixel (/t/o/<token>) paths reach the web app; everything else is a plain 404.
       lm.gotixi.in {
-        reverse_proxy millionsend:3000
+        @tracking path_regexp ^/t/[co]/[^/]+$
+        handle @tracking {
+          reverse_proxy millionsend:3000
+        }
+        handle {
+          respond 404
+        }
       }
   - path: /usr/local/bin/celrys-sync-secrets
     permissions: "0700"
