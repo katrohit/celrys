@@ -46,10 +46,10 @@ write_files:
       ${api_hostname} {
         reverse_proxy millionsend:3001
       }
-      # Link-tracking host used in already-sent emails (card and unsubscribe links).
-      # Only click (/t/c/<token>), open-pixel (/t/o/<token>) and unsubscribe (/unsubscribe/<token>) paths reach the web app; everything else is a plain 404.
-      lm.gotixi.in {
-        @tracking path_regexp ^/(t/[co]|unsubscribe(/confirm)?)/[^/]+$
+      # Link-tracking hosts: lm.gotixi.in (already-sent emails) and lm.in.gotixi.com (tracking domain for in.gotixi.com).
+      # Only /t/* (click, open pixel) and /unsubscribe/* paths reach the web app; everything else is a plain 404.
+      lm.gotixi.in, lm.in.gotixi.com {
+        @tracking path /t/* /unsubscribe/*
         handle @tracking {
           reverse_proxy millionsend:3000
         }
