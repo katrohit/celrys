@@ -46,9 +46,16 @@ write_files:
       ${api_hostname} {
         reverse_proxy millionsend:3001
       }
-      # Link-tracking host used in already-sent emails (card and unsubscribe links).
-      lm.gotixi.in {
-        reverse_proxy millionsend:3000
+      # Link-tracking hosts: lm.gotixi.in (already-sent emails) and lm.in.gotixi.com (tracking domain for in.gotixi.com).
+      # Only tracked-link paths reach the web app; everything else is a plain 404.
+      lm.gotixi.in, lm.in.gotixi.com {
+        @tracking path /t/*
+        handle @tracking {
+          reverse_proxy millionsend:3000
+        }
+        handle {
+          respond 404
+        }
       }
   - path: /usr/local/bin/celrys-sync-secrets
     permissions: "0700"

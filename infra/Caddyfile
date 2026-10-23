@@ -12,10 +12,10 @@ api.mesend.celrys.com {
   reverse_proxy millionsend:3001
 }
 
-# Link-tracking host used in already-sent emails (card and unsubscribe links).
+# Link-tracking hosts: lm.gotixi.in (already-sent emails) and lm.in.gotixi.com (tracking domain for in.gotixi.com).
 # Only tracked-link paths reach the web app; everything else is a plain 404 so the host doesn't reveal MillionSend.
-lm.gotixi.in {
-  @tracking path_regexp ^/t/c/[^/]+$
+lm.gotixi.in, lm.in.gotixi.com {
+  @tracking path /t/*
   handle @tracking {
     reverse_proxy millionsend:3000
   }
