@@ -47,9 +47,9 @@ write_files:
         reverse_proxy millionsend:3001
       }
       # Link-tracking hosts: lm.gotixi.in (already-sent emails) and lm.in.gotixi.com (tracking domain for in.gotixi.com).
-      # Only tracked-link paths reach the web app; everything else is a plain 404.
+      # Only click (/t/c/<token>), open-pixel (/t/o/<token>) and unsubscribe (/unsubscribe/<token>) paths reach the web app; everything else is a plain 404.
       lm.gotixi.in, lm.in.gotixi.com {
-        @tracking path /t/*
+        @tracking path_regexp ^/(t/[co]|unsubscribe(/confirm)?)/[^/]+$
         handle @tracking {
           reverse_proxy millionsend:3000
         }
